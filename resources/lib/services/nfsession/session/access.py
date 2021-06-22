@@ -9,6 +9,7 @@
     See LICENSES/MIT.md for more information.
 """
 import re
+from http.cookiejar import Cookie
 
 import resources.lib.utils.website as website
 import resources.lib.common as common
@@ -82,8 +83,29 @@ class SessionAccess(SessionCookie, SessionHTTPRequests):
         # Add the cookies to the session
         self.session.cookies.clear()
         for cookie in data['cookies']:
-            self.session.cookies.set(cookie[0], cookie[1], **cookie[2])
-        cookies.log_cookie(self.session.cookies)
+            # The code below has been adapted from httpx.Cookies.set() method
+            kwargs = {
+                'version': 0,
+                'name': cookie['name'],
+                'value': cookie['value'],
+                'port': None,
+                'port_specified': False,
+                'domain': cookie['domain'],
+                'domain_specified': bool(cookie['domain']),
+                'domain_initial_dot': cookie['domain'].startswith('.'),
+                'path': cookie['path'],
+                'path_specified': bool(cookie['path']),
+                'secure': cookie['secure'],
+                'expires': cookie['expires'],
+                'discard': True,
+                'comment': None,
+                'comment_url': None,
+                'rest': cookie['rest'],
+                'rfc2109': False,
+            }
+            cookie = Cookie(**kwargs)
+            self.session.cookies.jar.set_cookie(cookie)
+        cookies.log_cookie(self.session.cookies.jar)
         # Try access to website
         try:
             website.extract_session_data(self.get('browse'), validate=True, update_profiles=True)
@@ -113,7 +135,7 @@ class SessionAccess(SessionCookie, SessionHTTPRequests):
         common.set_credentials({'email': email, 'password': password})
         LOG.info('Login successful')
         ui.show_notification(common.get_local_string(30109))
-        cookies.save(self.session.cookies)
+        cookies.save(self.session.cookies.jar)
         return True
 
     @measure_exec_time_decorator(is_immediate=True)
@@ -136,7 +158,7 @@ class SessionAccess(SessionCookie, SessionHTTPRequests):
                 common.set_credentials(credentials)
             LOG.info('Login successful')
             ui.show_notification(common.get_local_string(30109))
-            cookies.save(self.session.cookies)
+            cookies.save(self.session.cookies.jar)
             return True
         except LoginValidateError as exc:
             self.session.cookies.clear()

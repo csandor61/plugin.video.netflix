@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 import resources.lib.common as common
 from resources.lib.database.db_utils import TABLE_SESSION
 from resources.lib.globals import G
-from resources.lib.services.tcp_keep_alive import enable_tcp_keep_alive
+# from resources.lib.services.tcp_keep_alive import enable_tcp_keep_alive
 from resources.lib.utils.logging import LOG
 
 if TYPE_CHECKING:  # This variable/imports are used only by the editor, so not at runtime
@@ -25,9 +25,6 @@ class SessionBase:
 
     session = None
     """The requests.session object to handle communication to Netflix"""
-
-    verify_ssl = True
-    """Use SSL verification when performing requests"""
 
     # Functions from derived classes to allow perform particular operations in parent classes
     external_func_activate_profile = None  # (set by nfsession_op.py)
@@ -45,9 +42,9 @@ class SessionBase:
             LOG.info('Session closed')
         except AttributeError:
             pass
-        from requests import Session
-        self.session = Session()
-        enable_tcp_keep_alive(self.session)
+        import httpx
+        self.session = httpx.Client(http2=True)
+        # enable_tcp_keep_alive(self.session)
         self.session.max_redirects = 10  # Too much redirects should means some problem
         self.session.headers.update({
             'User-Agent': common.get_user_agent(enable_android_mediaflag_fix=True),

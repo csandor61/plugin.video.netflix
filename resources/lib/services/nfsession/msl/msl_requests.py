@@ -179,7 +179,8 @@ class MSLRequests(MSLRequestBuilder):
                     _endpoint = endpoint
                 LOG.debug('Executing POST request to {}', _endpoint)
                 start = time.perf_counter()
-                response = self.nfsession.session.post(_endpoint, request_data,
+                response = self.nfsession.session.post(url=_endpoint,
+                                                       data=request_data,
                                                        headers=self.HTTP_HEADERS,
                                                        timeout=4)
                 LOG.debug('Request took {}s', time.perf_counter() - start)

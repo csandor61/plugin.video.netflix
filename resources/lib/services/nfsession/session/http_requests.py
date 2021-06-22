@@ -32,14 +32,14 @@ class SessionHTTPRequests(SessionBase):
     def get(self, endpoint, **kwargs):
         """Execute a GET request to the designated endpoint."""
         return self._request_call(
-            method=self.session.get,
+            method='GET',
             endpoint=endpoint,
             **kwargs)
 
     def post(self, endpoint, **kwargs):
         """Execute a POST request to the designated endpoint."""
         return self._request_call(
-            method=self.session.post,
+            method='POST',
             endpoint=endpoint,
             **kwargs)
 
@@ -56,16 +56,21 @@ class SessionHTTPRequests(SessionBase):
         retry = 1
         while True:
             try:
-                LOG.debug('Executing {verb} request to {url}',
-                          verb='GET' if method == self.session.get else 'POST', url=url)
+                LOG.debug('Executing {verb} request to {url}', verb=method, url=url)
                 start = time.perf_counter()
-                response = method(
-                    url=url,
-                    verify=self.verify_ssl,
-                    headers=headers,
-                    params=params,
-                    data=data,
-                    timeout=8)
+                if method == 'GET':
+                    response = self.session.get(
+                        url=url,
+                        headers=headers,
+                        params=params,
+                        timeout=8)
+                else:
+                    response = self.session.post(
+                        url=url,
+                        headers=headers,
+                        params=params,
+                        data=data,
+                        timeout=8)
                 LOG.debug('Request took {}s', time.perf_counter() - start)
                 LOG.debug('Request returned status code {}', response.status_code)
                 break
@@ -98,7 +103,7 @@ class SessionHTTPRequests(SessionBase):
         """Refresh session data from the Netflix website"""
         try:
             self.auth_url = website.extract_session_data(self.get('browse'))['auth_url']
-            cookies.save(self.session.cookies)
+            cookies.save(self.session.cookies.jar)
             LOG.debug('Successfully refreshed session data')
             return True
         except MbrStatusError:
