@@ -14,7 +14,7 @@ import time
 import zlib
 from typing import TYPE_CHECKING
 
-import requests.exceptions as req_exceptions
+import httpx
 
 import resources.lib.common as common
 from resources.lib.common.exceptions import MSLError
@@ -186,7 +186,7 @@ class MSLRequests(MSLRequestBuilder):
                 LOG.debug('Request took {}s', time.perf_counter() - start)
                 LOG.debug('Request returned response with status {}', response.status_code)
                 break
-            except req_exceptions.ConnectionError as exc:
+            except httpx.ConnectError as exc:
                 LOG.error('HTTP request error: {}', exc)
                 if retry == 3:
                     raise

@@ -11,7 +11,7 @@
 import json
 import time
 
-import requests.exceptions as req_exceptions
+import httpx
 
 import resources.lib.common as common
 import resources.lib.utils.website as website
@@ -74,7 +74,14 @@ class SessionHTTPRequests(SessionBase):
                 LOG.debug('Request took {}s', time.perf_counter() - start)
                 LOG.debug('Request returned status code {}', response.status_code)
                 break
-            except req_exceptions.ConnectionError as exc:
+            except httpx.RemoteProtocolError as exc:
+                if 'Server disconnected' in str(exc):
+                    # Known reasons:
+                    # - The server has revoked cookies validity
+                    # - The user has executed "Sign out of all devices" from account settings
+                    raise NotLoggedInError from exc
+                raise
+            except httpx.ConnectError as exc:
                 LOG.error('HTTP request error: {}', exc)
                 if retry == 3:
                     raise
@@ -121,7 +128,7 @@ class SessionHTTPRequests(SessionBase):
             common.purge_credentials()
             ui.show_notification(common.get_local_string(30008))
             raise NotLoggedInError from exc
-        except req_exceptions.RequestException:
+        except httpx.RequestError:
             import traceback
             LOG.warn('Failed to refresh session data, request error (RequestException)')
             LOG.warn(traceback.format_exc())

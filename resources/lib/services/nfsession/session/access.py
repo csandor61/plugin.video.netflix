@@ -11,6 +11,8 @@
 import re
 from http.cookiejar import Cookie
 
+import httpx
+
 import resources.lib.utils.website as website
 import resources.lib.common as common
 import resources.lib.utils.cookies as cookies
@@ -31,7 +33,6 @@ class SessionAccess(SessionCookie, SessionHTTPRequests):
     def prefetch_login(self):
         """Check if we have stored credentials.
         If so, do the login before the user requests it"""
-        from requests import exceptions
         try:
             common.get_credentials()
             if not self.is_logged_in():
@@ -39,7 +40,7 @@ class SessionAccess(SessionCookie, SessionHTTPRequests):
             return True
         except MissingCredentialsError:
             pass
-        except exceptions.RequestException as exc:
+        except httpx.RequestError as exc:
             # It was not possible to connect to the web service, no connection, network problem, etc
             import traceback
             LOG.error('Login prefetch: request exception {}', exc)
@@ -78,7 +79,6 @@ class SessionAccess(SessionCookie, SessionHTTPRequests):
     @measure_exec_time_decorator(is_immediate=True)
     def login_auth_data(self, data=None, password=None):
         """Perform account login with authentication data"""
-        from requests import exceptions
         LOG.debug('Logging in with authentication data')
         # Add the cookies to the session
         self.session.cookies.clear()
@@ -127,7 +127,7 @@ class SessionAccess(SessionCookie, SessionHTTPRequests):
                                             'task': 'auth'})
             if response.get('status') != 'ok':
                 raise LoginError(common.get_local_string(12344))  # 12344=Passwords entered did not match.
-        except exceptions.HTTPError as exc:
+        except httpx.HTTPStatusError as exc:
             if exc.response.status_code == 500:
                 # This endpoint raise HTTP error 500 when the password is wrong
                 raise LoginError(common.get_local_string(12344)) from exc
