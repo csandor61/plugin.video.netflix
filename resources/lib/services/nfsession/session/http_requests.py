@@ -79,6 +79,8 @@ class SessionHTTPRequests(SessionBase):
                     # Known reasons:
                     # - The server has revoked cookies validity
                     # - The user has executed "Sign out of all devices" from account settings
+                    # Clear the user ID tokens are tied to the credentials
+                    self.msl_handler.clear_user_id_tokens()
                     raise NotLoggedInError from exc
                 raise
             except httpx.ConnectError as exc:
