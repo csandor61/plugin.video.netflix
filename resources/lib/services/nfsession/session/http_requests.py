@@ -132,7 +132,7 @@ class SessionHTTPRequests(SessionBase):
             raise NotLoggedInError from exc
         except httpx.RequestError:
             import traceback
-            LOG.warn('Failed to refresh session data, request error (RequestException)')
+            LOG.warn('Failed to refresh session data, request error (RequestError)')
             LOG.warn(traceback.format_exc())
             if raise_exception:
                 raise
@@ -185,7 +185,7 @@ class SessionHTTPRequests(SessionBase):
             if endpoint_conf['add_auth_url'] == 'to_data':
                 data['authURL'] = self.auth_url
             if endpoint_conf.get('content_type') == 'application/x-www-form-urlencoded':
-                data_converted = data  # In this case Requests module convert the data automatically
+                data_converted = data  # In this case the data is converted automatically
             else:
                 data_converted = json.dumps(data, separators=(',', ':'))  # Netflix rejects spaces
         else:
@@ -206,6 +206,7 @@ def _document_url(endpoint_address, kwargs):
 def _api_url(endpoint_address):
     baseurl = G.LOCAL_DB.get_value('api_endpoint_url', table=TABLE_SESSION)
     return f'{baseurl}{endpoint_address}'
+
 
 def _raise_api_error(decoded_response):
     if decoded_response.get('status', 'success') == 'error':
