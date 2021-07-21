@@ -47,7 +47,7 @@ class SessionCookie(SessionBase):
                           cookie_name)
                 return False
             for cookie in self.session.cookies.jar:
-                if cookie != cookie_name:
+                if cookie.name != cookie_name:
                     continue
                 if cookie.expires <= int(time.time()):
                     LOG.info('Login is expired')
